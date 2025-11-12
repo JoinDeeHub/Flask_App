@@ -439,6 +439,484 @@ Include the following in your submission:
 
 <img width="707" height="661" alt="Screenshot from 2025-11-12 00-41-37" src="https://github.com/user-attachments/assets/8a766bb1-0ba1-4f04-8125-6eb7bbaf7526" />
 
+* * * * *
+
+
+# ⚙️ Jenkins CI/CD Pipeline for Flask Application
+
+## 🎯 Objective
+
+Set up a **Jenkins CI/CD pipeline** that automates the **build, test, and deployment** stages for a Python-based Flask web application.
+
+This pipeline ensures that every code change is automatically:
+
+1\. Built and tested using Python virtual environments.
+
+2\. Deployed to a staging environment on an EC2 server.
+
+3\. Reported via Jenkins email notifications for success or failure.
+
+---
+
+## 🏗️ Project Overview
+
+This project demonstrates how to integrate **Jenkins** with a **Flask web application** hosted on GitHub to enable **automated testing and deployment**.  
+
+It follows the DevOps best practices of continuous integration and continuous delivery.
+
+---
+
+🏗️ Architecture Overview
+
+<img width="844" height="454" alt="image" src="https://github.com/user-attachments/assets/10829a67-57bf-4870-bf74-a50dcf247f9f" />
+
+
+---
+
+## 📁 Repository Structure
+
+<pre class="overflow-visible!" data-start="1910" data-end="2115"><div class="contain-inline-size rounded-2xl relative bg-token-sidebar-surface-primary"><div class="sticky top-9"><div class="absolute end-0 bottom-0 flex h-9 items-center pe-2"><div class="bg-token-bg-elevated-secondary text-token-text-secondary flex items-center gap-4 rounded-sm px-2 font-sans text-xs"></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="whitespace-pre!"><span><span>Flask_App/
+
+├── app.py
+
+├── requirements.txt
+
+├── templates/
+
+│ ├── base.html
+
+│ ├── index.html
+
+│ ├── add_student.html
+
+│ └── update_student.html
+
+├── Jenkinsfile
+
+├── README.md
+
+└── tests/
+
+└── test_sample.py
+</span></span></code></div></div></pre>
+
+
+ code
+
+**Repository:** [https://github.com/JoinDeeHub/Flask_App](https://github.com/JoinDeeHub/Flask_App)
+
+---
+
+## ⚙️ 1. Setup Instructions
+
+### 🖥️ Jenkins Installation
+
+Jenkins was installed on an Ubuntu virtual machine (or EC2 instance) using the following steps:
+
+```
+
+sudo apt update -y
+
+sudo apt install -y openjdk-17-jre-headless git python3 python3-venv python3-pip
+
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc >/dev/null
+
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list >/dev/null
+
+sudo apt update -y
+
+sudo apt install -y jenkins
+
+sudo systemctl enable --now jenkins
+```
+
+Access Jenkins at:
+
+👉 http://<JENKINS_SERVER_IP>:8080
+
+🔩 Required Jenkins Plugins
+
+Install these plugins under Manage Jenkins → Plugins:
+
+Pipeline
+
+Git & GitHub Integration
+
+GitHub Branch Source
+
+SSH Agent Plugin
+
+Email Extension Plugin
+
+Credentials Binding
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-12 18-08-57" src="https://github.com/user-attachments/assets/edbfefeb-9868-4ee5-9830-b4ca44c16a1b" />
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-12 18-08-26" src="https://github.com/user-attachments/assets/59c08e7e-ba7e-4938-8574-6999447093e8" />
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-12 18-08-13" src="https://github.com/user-attachments/assets/ca6c1663-32b0-4a45-9453-1a0a1a60158b" />
+
+
+---
+
+💻 2. Source Code Setup
+
+Fork this repository: ``` https://github.com/JoinDeeHub/Flask_App ```
+
+Clone the forked repository into your Jenkins server:
+
+```
+git clone https://github.com/<your-username>/Flask_App.git
+
+cd Flask_App
+
+Ensure that your Flask app is working locally:
+
+
+python3 -m venv venv
+
+. venv/bin/activate
+
+pip install -r requirements.txt
+
+python app.py
+
+Access your local Flask app at http://127.0.0.1:8000
+```
+
+---
+
+🧱 3. Jenkins Pipeline Overview
+
+The Jenkinsfile defines a declarative pipeline with three main stages:
+
+Stage  Description
+
+Build  Creates a virtual environment and installs dependencies using pip.
+
+Test  Runs automated tests using pytest.
+
+Deploy  Copies the tested application to a remote EC2 instance's /var/www/html/ directory and restarts services.
+
+---
+
+
+🧩 Jenkinsfile
+
+Below is the simplified version of the Jenkinsfile used in this project:
+
+```
+groovy
+
+
+pipeline {
+
+  agent any
+
+  environment {
+
+    DEPLOY_HOST = "YOUR_EC2_PUBLIC_IP"
+
+    DEPLOY_USER = "ubuntu"
+
+    SSH_CRED_ID = "EC2_SSH_KEY"
+
+    DEPLOY_PATH = "/var/www/html"
+
+  }
+
+  stages {
+
+    stage('Checkout') {
+
+      steps {
+
+        checkout scm
+
+        echo "Checked out branch: ${env.BRANCH_NAME}"
+
+      }
+
+    }
+
+    stage('Build') {
+
+      steps {
+
+        sh '''
+
+          python3 -m venv venv
+
+          . venv/bin/activate
+
+          pip install --upgrade pip
+
+          pip install -r requirements.txt
+
+        '''
+
+      }
+
+    }
+
+    stage('Test') {
+
+      steps {
+
+        sh '''
+
+          . venv/bin/activate
+
+          pytest || echo "No tests found"
+
+        '''
+
+      }
+
+    }
+
+    stage('Deploy') {
+
+      steps {
+
+        withCredentials([sshUserPrivateKey(credentialsId: "${SSH_CRED_ID}",
+
+                                           keyFileVariable: 'SSH_KEY_FILE',
+
+                                           usernameVariable: 'SSH_USER')]) {
+
+          sh '''
+
+            echo "Deploying to ${DEPLOY_USER}@${DEPLOY_HOST}"
+
+            scp -i $SSH_KEY_FILE -o StrictHostKeyChecking=no -r * ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}
+
+            ssh -i $SSH_KEY_FILE -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "sudo systemctl restart flaskapp && sudo systemctl restart nginx"
+
+          '''
+
+        }
+
+      }
+
+    }
+
+  }
+
+  post {
+
+    success {
+
+      mail to: 'you@example.com',
+
+           subject: "Jenkins Build SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+
+           body: "Build succeeded! View details: ${env.BUILD_URL}"
+
+    }
+
+    failure {
+
+      mail to: 'you@example.com',
+
+           subject: "Jenkins Build FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+
+           body: "Build failed! Check logs: ${env.BUILD_URL}"
+
+    }
+
+  }
+
+}
+```
+
+---
+
+
+🚀 4. Deployment Configuration
+
+EC2 Server Setup
+
+On your EC2 instance (Ubuntu 22.04):
+
+```
+sudo apt update -y
+
+sudo apt install -y python3-venv python3-pip nginx
+```
+
+Create Flask systemd Service:
+
+```/etc/systemd/system/flaskapp.service```
+
+ini
+
+```
+[Unit]
+
+Description=Gunicorn instance to serve Flask_App
+
+After=network.target
+
+[Service]
+
+User=ubuntu
+
+Group=www-data
+
+WorkingDirectory=/home/ubuntu/app
+
+ExecStart=/home/ubuntu/app/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 app:app
+
+Restart=on-failure
+
+[Install]
+
+WantedBy=multi-user.target
+
+```
+
+Enable and start:
+
+```
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable flaskapp
+
+sudo systemctl start flaskapp
+```
+
+<img width="738" height="370" alt="Screenshot from 2025-11-13 01-22-17" src="https://github.com/user-attachments/assets/ce152a1f-a805-4496-b863-52dc494cdafc" />
+
+<img width="1141" height="651" alt="Screenshot from 2025-11-13 01-24-46" src="https://github.com/user-attachments/assets/49002b1c-89c0-452f-80fe-f4f4c2010ac1" />
+
+<img width="1365" height="651" alt="Screenshot from 2025-11-13 01-25-11" src="https://github.com/user-attachments/assets/1fde0e47-7e32-4e1f-bcc9-171bb6817bf0" />
+
+
+---
+
+🔔 5. Pipeline Triggers
+
+The pipeline is automatically triggered when:
+
+A commit is pushed to the main branch of the GitHub repository.
+
+Steps:
+
+In Jenkins, open the pipeline configuration.
+
+Under Build Triggers, check:
+
+✅ "GitHub hook trigger for GITScm polling"
+
+On GitHub, add a webhook:
+
+Payload URL: http://<jenkins-server>:8080/github-webhook/
+
+Content Type: application/json
+
+Event: "Just the push event."
+
+---
+
+✉️ 6. Email Notifications
+
+The pipeline uses Jenkins' Email Extension Plugin for notifications.
+
+SMTP Setup:
+
+Go to Manage Jenkins → Configure System.
+
+Under "E-mail Notification":
+
+SMTP Server: smtp.gmail.com
+
+Port: 465
+
+Use SSL
+
+Credentials: Your Gmail App Password
+
+<img width="1128" height="366" alt="Screenshot from 2025-11-13 01-28-29" src="https://github.com/user-attachments/assets/6e0b30c6-0cf6-49e7-bab1-a7825d1b70d1" />
+
+
+---
+
+🧪 7. Testing the Pipeline
+
+Push code changes to the main branch:
+
+```
+
+git add .
+
+git commit -m "Test CI/CD pipeline"
+
+git push origin main
+
+Watch Jenkins automatically trigger a new build:
+
+Stage 1: Build dependencies
+
+Stage 2: Run tests
+
+Stage 3: Deploy to EC2
+
+Verify the application:
+
+Production: http://<EC2-IP>/
+
+Staging (optional): http://<EC2-IP>/staging/
+ ```
+
+<img width="1362" height="402" alt="Screenshot from 2025-11-11 23-50-59" src="https://github.com/user-attachments/assets/548c5866-0b07-440c-9d7d-7090f0492613" />
+
+
+Check Jenkins console logs for deployment confirmation.
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-13 00-59-09" src="https://github.com/user-attachments/assets/0aebb17d-13d9-4a96-8099-af9592dd7c2c" />
+
+<img width="1217" height="366" alt="Screenshot from 2025-11-13 01-30-12" src="https://github.com/user-attachments/assets/67d43b2b-0373-45ab-81a1-b4705f88e0bc" />
+
+<img width="1363" height="366" alt="Screenshot from 2025-11-13 01-32-14" src="https://github.com/user-attachments/assets/0ffb3320-d3ef-42a6-a261-15958f5f4314" />
+
+---
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-13 01-01-52" src="https://github.com/user-attachments/assets/24b03059-fa81-4c96-a6e2-d7ab373ff5d0" />
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-13 00-45-14" src="https://github.com/user-attachments/assets/855dbc81-1602-4aa7-a9bf-b2b2f7c5f527" />
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-13 00-45-27" src="https://github.com/user-attachments/assets/631937a1-6347-4f9d-a2f4-26cb95dcae72" />
+
+<img width="1363" height="624" alt="Screenshot from 2025-11-13 01-38-38" src="https://github.com/user-attachments/assets/cafbc486-dc65-4a55-83b9-8d7d09040115" />
+
+<img width="1363" height="474" alt="image" src="https://github.com/user-attachments/assets/05b4b80b-43ed-4da1-9c73-75cce725b40c" />
+
+* * * * *
+
+<img width="1363" height="366" alt="image" src="https://github.com/user-attachments/assets/6637d8b5-90d4-4ee7-a696-8931dc93c1d4" />
+
+<img width="1366" height="701" alt="Screenshot from 2025-11-13 00-44-14" src="https://github.com/user-attachments/assets/3a776a57-bdb6-4e04-a06e-cabbd303f264" />
+
+
+
+🏁 Conclusion
+
+This project successfully implements a Jenkins-based CI/CD pipeline for a Flask web application.
+
+It automates the build, testing, and deployment processes, ensuring:
+
+Faster feedback cycles
+
+Reliable deployments
+
+Reduced manual intervention
+
+Result:
+
+A fully automated CI/CD pipeline delivering continuous integration and deployment from GitHub → Jenkins → EC2.
+
 
 
 * * * * *
@@ -447,8 +925,10 @@ Include the following in your submission:
 ---------
 
 **DEEPIKA NARENDRAN**\
+Project: Jenkins CI/CD for Flask Web Application &
 GitHub Actions CI/CD Pipeline Flask App
 
 GitHub: @JoinDeeHub
+
 
 
