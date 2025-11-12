@@ -54,7 +54,7 @@ yaml
 
 ### 🚀 Workflow Overview
 
-| Stage | Description |
+<pre class="overflow-visible!" data-start="1910" data-end="2115"><div class="contain-inline-size rounded-2xl relative bg-token-sidebar-surface-primary"><div class="sticky top-9"><div class="absolute end-0 bottom-0 flex h-9 items-center pe-2"><div class="bg-token-bg-elevated-secondary text-token-text-secondary flex items-center gap-4 rounded-sm px-2 font-sans text-xs"></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="whitespace-pre!"><span><span>| Stage | Description |
 
 |--------|--------------|
 
@@ -66,7 +66,12 @@ yaml
 
 | **Deploy to Staging** | Triggered automatically when code is pushed to `staging` branch |
 
-| **Deploy to Production** | Triggered automatically when code is pushed to `main` branch |
+| **Deploy to Production** | Triggered automatically when code is pushed to `main` branch |</span></span></code></div></div></pre>
+
+<img width="1352" height="592" alt="Screenshot from 2025-11-12 06-29-03" src="https://github.com/user-attachments/assets/f165af98-9063-4b8a-b0cf-f8d9ee259279" />
+
+
+* * * * *
 
 
 Actuall page 
@@ -445,4 +450,5 @@ Include the following in your submission:
 GitHub Actions CI/CD Pipeline Flask App
 
 GitHub: @JoinDeeHub
+
 
