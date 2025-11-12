@@ -899,6 +899,7 @@ Check Jenkins console logs for deployment confirmation.
 
 <img width="1366" height="701" alt="Screenshot from 2025-11-13 00-44-14" src="https://github.com/user-attachments/assets/3a776a57-bdb6-4e04-a06e-cabbd303f264" />
 
+<img width="1366" height="534" alt="image" src="https://github.com/user-attachments/assets/1cf6dab3-334f-4c34-860d-15cc45b38c5d" />
 
 
 🏁 Conclusion
@@ -929,6 +930,3 @@ Project: Jenkins CI/CD for Flask Web Application &
 GitHub Actions CI/CD Pipeline Flask App
 
 GitHub: @JoinDeeHub
-
-
-
